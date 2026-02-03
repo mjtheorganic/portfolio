@@ -231,6 +231,25 @@
             cursor: text;
         }
 
+        .download-btn {
+            display: inline-block;
+            margin-top: 16px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: 'Crimson Pro', serif;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            border: none;
+        }
+
+        .download-btn:hover {
+            opacity: 0.8;
+        }
+
         .add-scribble-btn {
             margin-top: 32px;
             padding: 12px 24px;
@@ -500,14 +519,14 @@
 
     <div class="home" id="homePage">
         <div class="emoji">🎟️</div>
-        <div class="title">MJ the Explorer</div>
+        <div class="title">MJ, Explorer</div>
         <nav class="nav">
             <a id="scribblesLink">Scribbles</a>
             <a id="ideasLink">Ideas</a>
             <a id="contactLink">Contact</a>
         </nav>
         <div class="contact-email" id="contactEmail">
-            minjinlee1214@gmail.com
+            <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3a575354505354565f5f0b080b0e7a5d575b535614595557">[email&#160;protected]</a>
         </div>
     </div>
 
@@ -572,12 +591,14 @@
         </div>
     </div>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         let scribbles = [
             {
                 title: 'Weekly Newsletter',
                 description: 'Telegram bot',
-                code: ''
+                code: '',
+                hasDownload: true,
+                downloadFilename: 'newsletter_appscript.txt'
             }
         ];
         let currentScribbleId = null;
@@ -662,6 +683,10 @@
             scribbles.forEach((scribble, index) => {
                 const item = document.createElement('div');
                 item.className = 'scribble-item';
+                
+                const downloadButton = scribble.hasDownload ? 
+                    `<a href="${scribble.downloadFilename}" class="download-btn" download>Download .txt</a>` : '';
+                
                 item.innerHTML = `
                     <div class="scribble-header">
                         <div class="scribble-info">
@@ -671,6 +696,7 @@
                         <div class="toggle-icon">▼</div>
                     </div>
                     <div class="scribble-content">
+                        ${downloadButton}
                         <div class="code-area" contenteditable="${isAdminMode}" data-index="${index}">${scribble.code || ''}</div>
                     </div>
                 `;
@@ -682,11 +708,13 @@
                 });
                 
                 const codeArea = item.querySelector('.code-area');
-                codeArea.addEventListener('blur', () => {
-                    if (isAdminMode) {
-                        scribbles[index].code = codeArea.textContent;
-                    }
-                });
+                if (codeArea) {
+                    codeArea.addEventListener('blur', () => {
+                        if (isAdminMode) {
+                            scribbles[index].code = codeArea.textContent;
+                        }
+                    });
+                }
                 
                 list.appendChild(item);
             });
