@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribbles - MJ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #fafaf9;
+            --text: #1a1a1a;
+            --text-muted: #999;
+            --accent: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Crimson Pro', serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text);
+            transition: transform 0.3s ease;
+            z-index: 100;
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            transform: translateX(-4px);
+        }
+
+        .page-content {
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 48px;
+            letter-spacing: -0.02em;
+        }
+
+        .scribbles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .scribble-item {
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .scribble-header {
+            padding: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .scribble-header:hover {
+            background: #fafafa;
+        }
+
+        .scribble-info {
+            flex: 1;
+        }
+
+        .scribble-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .scribble-desc {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text);
+        }
+
+        .toggle-icon {
+            font-size: 16px;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+            user-select: none;
+            margin-top: 4px;
+        }
+
+        .scribble-item.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .scribble-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 24px;
+        }
+
+        .scribble-item.expanded .scribble-content {
+            max-height: 500px;
+            padding: 0 24px 24px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #3a3a3a;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 40px 20px;
+            }
+
+            .back-btn {
+                top: 20px;
+                left: 20px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .scribble-title {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn">←</a>
+    
+    <div class="page-content">
+        <h1 class="page-title">Scribbles</h1>
+        
+        <div class="scribbles-list">
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Weekly Newsletter</div>
+                        <div class="scribble-desc">Telegram bot (@MJnewsletter_bot)</div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <a href="newsletter_appscript.txt" class="download-btn" download>Download .txt</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.scribble-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const item = header.closest('.scribble-item');
+                item.classList.toggle('expanded');
+            });
+        });
+    </script>
+</body>
+</html>
