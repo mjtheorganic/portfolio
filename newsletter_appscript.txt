@@ -1,642 +1,480 @@
-// ========== 자동 뉴스레터 with 구독 시스템 ==========
-// 매주 월요일 오전 10시에 구독자 전체에게 Telegram으로 뉴스 전송
-// 
-// 기능:
-// - /subscribe: 뉴스레터 구독
-// - /unsubscribe: 구독 취소
-// - /status: 구독 상태 확인
-// - /stats: 구독자 수 확인 (관리자만)
+// ========================================
+// 텔레그램 뉴스레터 봇 (Google Apps Script)
+// ========================================
 
-// ========== 여기에 당신의 정보를 입력하세요 ==========
-const TELEGRAM_BOT_TOKEN = ‘##’;
-const CLAUDE_API_KEY = ‘##’;
-const ADMIN_CHAT_ID = ‘##’;
+// ========== 설정값 ==========
+const CONFIG = {
+  TELEGRAM_BOT_TOKEN: '##',
+  CLAUDE_API_KEY: '##',
+  ADMIN_CHAT_ID: '##single person',
+  
+  // Claude 설정
+  CLAUDE_MODEL: '##',
+  CLAUDE_MAX_TOKENS: 2000,
+  
+  // 뉴스 수집 설정
+  MAX_ITEMS_PER_QUERY: 8,
+  NEWS_DAYS_LIMIT: 7
+};
 
-// Google Sheets ID (나중에 입력)
-// Sheets URL에서 /d/ 다음 부분을 복사: 
-// https://docs.google.com/spreadsheets/d/여기_부분_복사/edit
-const SPREADSHEET_ID = ‘##’;
-// ====================================================
-
-// ========== 뉴스 설정 ==========
-const NEWS_CATEGORIES = {
+// ========== 뉴스 검색 쿼리 ==========
+const NEWS_QUERIES = {
+  // 국제 뉴스
   international: {
-    primary: ['경제', '비즈니스', '금융', '기업', 'economy', 'business', 'stock', 'finance', 'AI', 'IT', 'Technology'],
-    secondary: ['정치', '외교', '국제관계', 'politics', 'diplomacy', 'war', 'trade']
+    economy: 'global economy OR inflation OR interest rate OR stock OR stock market OR S&P500 OR NASDAQ OR investment OR venture capital OR M&A OR IPO -한국 -korea',
+    industry: 'AI OR semiconductor OR tech OR electric vehicle OR space OR energy OR biotech -한국 -korea',
+    policy: 'Fed OR central bank OR trade OR policy OR tariff OR sanction OR trump -한국 -korea'
   },
+  
+  // 국내 뉴스
   domestic: {
-    primary: ['경제', '부동산', '주식', '금융'],
-    secondary: ['문화', '엔터테인먼트', 'IT', '기술'],
-    tertiary: ['정치', '사회']
+    economy: '한국 경제 OR GDP OR 물가 OR 금리 OR 환율 OR 경기침체 OR 소비자물가 OR 코스피 OR 코스닥 OR 코스피지수 OR 주식 OR 증시 OR 투자 OR 벤처 OR 합병 OR 인수',
+    industry: '반도체 OR 삼성전자 OR SK하이닉스 OR 배터리 OR AI OR 기술 OR 마운자로',
+    policy: '한국은행 OR 기획재정부 OR 금융위 OR 정책 OR 규제 OR 대출 OR 부동산 OR 이재명'
   }
 };
 
-const MAX_ITEMS_PER_CATEGORY = 10;
-// ====================================================
+// ========== 제외 키워드 ==========
+
+const EXCLUDE_KEYWORDS = [
+  // 광고/홍보
+  '광고', '이벤트', '할인', '프로모션', '후원', '제공',
+  // 연예/스포츠
+  '연예', '스포츠', '축구', '야구', '아이돌', '드라마', '영화 개봉',
+  // 날씨/생활
+  '날씨', '운세', '로또',
+  // 저품질 신호
+  '클릭', '충격', '경악', '알고보니', '현재 상황',
+  // 단순 시세
+  '마감 시세', '종가'
+];
+
+// ==========================================
+// 메인 실행 함수
+// ==========================================
 
 /**
- * ========== 구독 관리 함수들 ==========
+ * 뉴스레터 생성 및 전송 (트리거에서 호출)
  */
-
-/**
- * Telegram Webhook 설정 (한 번만 실행)
- */
-function setWebhook() {
-  const url = ScriptApp.getService().getUrl();
-  const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook`;
-  
-  const payload = {
-    url: url
-  };
-  
-  try {
-    const response = UrlFetchApp.fetch(telegramUrl, {
-      method: 'post',
-      contentType: 'application/json',
-      payload: JSON.stringify(payload)
-    });
-    
-    Logger.log('Webhook 설정 완료: ' + response.getContentText());
-    return true;
-  } catch (error) {
-    Logger.log('Webhook 설정 오류: ' + error.message);
-    return false;
-  }
-}
-
-/**
- * Webhook으로 들어오는 메시지 처리
- */
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    
-    if (data.message) {
-      const chatId = data.message.chat.id.toString();
-      const text = data.message.text;
-      const username = data.message.from.username || '익명';
-      const firstName = data.message.from.first_name || '';
-      
-      Logger.log(`메시지 수신: ${text} from ${chatId}`);
-      
-      // 명령어 처리
-      if (text.startsWith('/')) {
-        handleCommand(text, chatId, username, firstName);
-      }
-    }
-    
-    return ContentService.createTextOutput(JSON.stringify({status: 'ok'}))
-      .setMimeType(ContentService.MimeType.JSON);
-      
-  } catch (error) {
-    Logger.log('doPost 오류: ' + error.message);
-    return ContentService.createTextOutput(JSON.stringify({status: 'error'}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-/**
- * 명령어 처리
- */
-function handleCommand(command, chatId, username, firstName) {
-  const cmd = command.split(' ')[0].toLowerCase();
-  
-  switch(cmd) {
-    case '/start':
-      sendTelegramMessage(chatId, getWelcomeMessage());
-      break;
-      
-    case '/subscribe':
-      handleSubscribe(chatId, username, firstName);
-      break;
-      
-    case '/unsubscribe':
-      handleUnsubscribe(chatId);
-      break;
-      
-    case '/status':
-      handleStatus(chatId);
-      break;
-      
-    case '/stats':
-      handleStats(chatId);
-      break;
-      
-    case '/help':
-      sendTelegramMessage(chatId, getHelpMessage());
-      break;
-      
-    default:
-      sendTelegramMessage(chatId, '알 수 없는 명령어입니다. /help를 입력하세요.');
-  }
-}
-
-/**
- * 환영 메시지
- */
-function getWelcomeMessage() {
-  return `📰 주간 뉴스레터 봇에 오신 것을 환영합니다!
-
-매주 월요일 오전 9-10시에 엄선된 뉴스를 받아보세요.
-
-🔔 구독하려면: /subscribe
-❌ 구독 취소: /unsubscribe
-📊 구독 상태: /status`;
-}
-
-/**
- * 도움말 메시지
- */
-function getHelpMessage() {
-  return `📋 사용 가능한 명령어:
-
-/subscribe - 뉴스레터 구독 시작
-/unsubscribe - 뉴스레터 구독 취소
-/status - 현재 구독 상태 확인
-/help - 이 도움말 보기
-
-📰 뉴스레터 정보:
-• 발송: 매주 월요일 오전 9-10시
-• 내용: 국제/국내 경제, 정치, 문화 뉴스
-• 선정 기준: 경제 영향력, 긴급성, 정보 가치, 실용성
-
-뉴스는 AI가 엄선한 중요한 내용만 포함됩니다.`;
-}
-
-/**
- * 구독 처리
- */
-function handleSubscribe(chatId, username, firstName) {
-  const sheet = getSubscribersSheet();
-  const data = sheet.getDataRange().getValues();
-  
-  // 이미 구독 중인지 확인
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === chatId) {
-      sendTelegramMessage(chatId, '✅ 이미 구독 중입니다!\n\n매주 월요일 오전에 뉴스레터를 받으실 수 있습니다.');
-      return;
-    }
-  }
-  
-  // 새 구독자 추가
-  const timestamp = new Date();
-  sheet.appendRow([chatId, username, firstName, timestamp, 'active']);
-  
-  const message = `🎉 구독이 완료되었습니다!
-
-매주 월요일 오전 9-10시에 엄선된 뉴스레터를 받으실 수 있습니다.
-
-구독을 취소하려면 /unsubscribe를 입력하세요.`;
-  
-  sendTelegramMessage(chatId, message);
-  
-  // 관리자에게 알림
-  if (ADMIN_CHAT_ID && ADMIN_CHAT_ID !== '여기에_관리자_Chat_ID_입력') {
-    const adminMessage = `🆕 새 구독자\n\n이름: ${firstName}\n아이디: @${username}\nChat ID: ${chatId}\n시간: ${timestamp}`;
-    sendTelegramMessage(ADMIN_CHAT_ID, adminMessage);
-  }
-  
-  Logger.log(`새 구독자: ${chatId} (${username})`);
-}
-
-/**
- * 구독 취소 처리
- */
-function handleUnsubscribe(chatId) {
-  const sheet = getSubscribersSheet();
-  const data = sheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === chatId) {
-      sheet.deleteRow(i + 1);
-      sendTelegramMessage(chatId, '👋 구독이 취소되었습니다.\n\n다시 구독하려면 /subscribe를 입력하세요.');
-      Logger.log(`구독 취소: ${chatId}`);
-      return;
-    }
-  }
-  
-  sendTelegramMessage(chatId, '❌ 구독 중이 아닙니다.\n\n구독하려면 /subscribe를 입력하세요.');
-}
-
-/**
- * 구독 상태 확인
- */
-function handleStatus(chatId) {
-  const sheet = getSubscribersSheet();
-  const data = sheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === chatId) {
-      const subscribeDate = new Date(data[i][3]);
-      const dateStr = Utilities.formatDate(subscribeDate, 'GMT+9', 'yyyy년 M월 d일 HH:mm');
-      
-      const message = `📊 구독 상태
-
-✅ 구독 중
-📅 구독 시작: ${dateStr}
-🔔 다음 발송: 매주 월요일 오전 10시
-
-구독을 취소하려면 /unsubscribe를 입력하세요.`;
-      
-      sendTelegramMessage(chatId, message);
-      return;
-    }
-  }
-  
-  sendTelegramMessage(chatId, '❌ 구독 중이 아닙니다.\n\n구독하려면 /subscribe를 입력하세요.');
-}
-
-/**
- * 통계 확인 (관리자만)
- */
-function handleStats(chatId) {
-  if (chatId !== ADMIN_CHAT_ID) {
-    sendTelegramMessage(chatId, '❌ 관리자만 사용할 수 있는 명령어입니다.');
-    return;
-  }
-  
-  const sheet = getSubscribersSheet();
-  const data = sheet.getDataRange().getValues();
-  const totalSubscribers = data.length - 1; // 헤더 제외
-  
-  // 최근 구독자 5명
-  const recentSubscribers = [];
-  for (let i = Math.max(1, data.length - 5); i < data.length; i++) {
-    const username = data[i][1] || '익명';
-    const firstName = data[i][2] || '';
-    const date = Utilities.formatDate(new Date(data[i][3]), 'GMT+9', 'M/d HH:mm');
-    recentSubscribers.push(`• ${firstName} (@${username}) - ${date}`);
-  }
-  
-  const message = `📊 구독자 통계
-
-👥 총 구독자: ${totalSubscribers}명
-
-📅 최근 구독자:
-${recentSubscribers.reverse().join('\n')}`;
-  
-  sendTelegramMessage(chatId, message);
-}
-
-/**
- * Google Sheets 가져오기
- */
-function getSubscribersSheet() {
-  const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let sheet = spreadsheet.getSheetByName('Subscribers');
-  
-  // 시트가 없으면 생성
-  if (!sheet) {
-    sheet = spreadsheet.insertSheet('Subscribers');
-    sheet.appendRow(['Chat ID', 'Username', 'First Name', 'Subscribe Date', 'Status']);
-    sheet.setFrozenRows(1);
-  }
-  
-  return sheet;
-}
-
-/**
- * 모든 구독자 Chat ID 가져오기
- */
-function getAllSubscribers() {
-  const sheet = getSubscribersSheet();
-  const data = sheet.getDataRange().getValues();
-  const subscribers = [];
-  
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][4] === 'active') {
-      subscribers.push(data[i][0]); // Chat ID
-    }
-  }
-  
-  return subscribers;
-}
-
-/**
- * ========== 뉴스레터 전송 함수들 ==========
- */
-
-/**
- * 메인 함수: 주간 뉴스레터 전송 (모든 구독자에게)
- */
-function sendWeeklyNewsletter() {
+function sendNewsletter() {
   try {
     Logger.log('=== 뉴스레터 생성 시작 ===');
     
-    // 1. 구독자 목록 가져오기
-    const subscribers = getAllSubscribers();
+    // 1. 뉴스 수집
+    const newsData = collectAllNews();
+    Logger.log('뉴스 수집 완료');
     
-    if (subscribers.length === 0) {
-      Logger.log('구독자가 없습니다.');
-      return;
-    }
-    
-    Logger.log(`구독자 수: ${subscribers.length}명`);
-    
-    // 2. 뉴스 수집
-    const newsData = collectNews();
-    
-    // 3. Claude API로 뉴스 요약 및 정리
+    // 2. Claude로 뉴스레터 생성
     const newsletter = generateNewsletterWithClaude(newsData);
+    Logger.log('뉴스레터 생성 완료');
     
-    // 4. 모든 구독자에게 전송
-    let successCount = 0;
-    let failCount = 0;
+    // 3. Telegram 전송
+    const result = sendTelegramMessage(CONFIG.ADMIN_CHAT_ID, newsletter);
     
-    subscribers.forEach((chatId, index) => {
-      try {
-        Utilities.sleep(100); // API 제한 방지 (100ms 대기)
-        sendTelegramMessage(chatId, newsletter);
-        successCount++;
-        Logger.log(`전송 성공: ${chatId} (${index + 1}/${subscribers.length})`);
-      } catch (error) {
-        failCount++;
-        Logger.log(`전송 실패: ${chatId} - ${error.message}`);
-      }
-    });
-    
-    // 5. 관리자에게 결과 보고
-    if (ADMIN_CHAT_ID && ADMIN_CHAT_ID !== '여기에_관리자_Chat_ID_입력') {
-      const report = `📊 뉴스레터 발송 완료\n\n✅ 성공: ${successCount}명\n❌ 실패: ${failCount}명\n총: ${subscribers.length}명`;
-      sendTelegramMessage(ADMIN_CHAT_ID, report);
+    if (result.ok) {
+      Logger.log('✅ 뉴스레터 전송 성공');
+    } else {
+      Logger.log('❌ 전송 실패: ' + result.description);
     }
-    
-    Logger.log('=== 뉴스레터 전송 완료 ===');
-    Logger.log(`성공: ${successCount}, 실패: ${failCount}`);
     
   } catch (error) {
-    Logger.log('오류 발생: ' + error.message);
+    Logger.log('❌ 오류 발생: ' + error.message);
     
-    if (ADMIN_CHAT_ID && ADMIN_CHAT_ID !== '여기에_관리자_Chat_ID_입력') {
-      sendTelegramMessage(ADMIN_CHAT_ID, `⚠️ 뉴스레터 생성 오류\n\n${error.message}`);
-    }
+    // 오류 알림 전송
+    sendTelegramMessage(
+      CONFIG.ADMIN_CHAT_ID, 
+      '⚠️ 뉴스레터 생성 오류\n\n' + error.message
+    );
   }
 }
 
+
+// ==========================================
+// 뉴스 수집 함수
+// ==========================================
+
 /**
- * 뉴스 수집 함수
+ * 모든 카테고리 뉴스 수집
  */
-function collectNews() {
+function collectAllNews() {
   const today = new Date();
   const dateStr = Utilities.formatDate(today, 'GMT+9', 'yyyy년 M월 d일');
   
-  Logger.log('뉴스 수집 중...');
-  
   const newsData = {
     date: dateStr,
+    
     international: {
-      economy: searchNews('international economy business news', MAX_ITEMS_PER_CATEGORY),
-      politics: searchNews('international politics diplomacy news', MAX_ITEMS_PER_CATEGORY)
+      economy: searchGoogleNews(NEWS_QUERIES.international.economy),
+      industry: searchGoogleNews(NEWS_QUERIES.international.industry),
+      policy: searchGoogleNews(NEWS_QUERIES.international.policy)
     },
+    
     domestic: {
-      economy: searchNews('한국 경제 금융 뉴스', MAX_ITEMS_PER_CATEGORY),
-      culture: searchNews('한국 문화 IT 기술 뉴스', MAX_ITEMS_PER_CATEGORY),
-      politics: searchNews('한국 정치 사회 뉴스', MAX_ITEMS_PER_CATEGORY)
+      economy: searchGoogleNews(NEWS_QUERIES.domestic.economy),
+      industry: searchGoogleNews(NEWS_QUERIES.domestic.industry),
+      policy: searchGoogleNews(NEWS_QUERIES.domestic.policy)
     }
   };
+  
+  // 수집 통계 로그
+  const intCount = Object.values(newsData.international).reduce((sum, arr) => sum + arr.length, 0);
+  const domCount = Object.values(newsData.domestic).reduce((sum, arr) => sum + arr.length, 0);
+  Logger.log(`수집 완료 - 국제: ${intCount}건, 국내: ${domCount}건`);
   
   return newsData;
 }
 
 /**
- * 구글 뉴스 검색
+ * Google News RSS 검색
  */
-function searchNews(query, maxResults) {
+function searchGoogleNews(query) {
   try {
     const encodedQuery = encodeURIComponent(query);
     const rssUrl = `https://news.google.com/rss/search?q=${encodedQuery}&hl=ko&gl=KR&ceid=KR:ko`;
     
-    const response = UrlFetchApp.fetch(rssUrl);
-    const xml = response.getContentText();
+    const response = UrlFetchApp.fetch(rssUrl, {
+      muteHttpExceptions: true
+    });
     
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`RSS 오류 (${query}): ${response.getResponseCode()}`);
+      return [];
+    }
+    
+    const xml = response.getContentText();
     const document = XmlService.parse(xml);
     const root = document.getRootElement();
     const channel = root.getChild('channel');
     const items = channel.getChildren('item');
     
-    const news = [];
-    for (let i = 0; i < Math.min(items.length, maxResults); i++) {
+    const newsItems = [];
+    
+    for (let i = 0; i < Math.min(items.length, CONFIG.MAX_ITEMS_PER_QUERY); i++) {
       const item = items[i];
-      news.push({
-        title: item.getChildText('title'),
-        link: item.getChildText('link'),
-        pubDate: item.getChildText('pubDate'),
-        source: item.getChildText('source') || '출처 미상'
+      
+      const title = item.getChildText('title') || '';
+      const link = item.getChildText('link') || '';
+      const pubDate = item.getChildText('pubDate') || '';
+      const source = item.getChildText('source') || extractSource(title);
+      
+      // 최근 N일 이내 뉴스만
+      if (!isRecentNews(pubDate, CONFIG.NEWS_DAYS_LIMIT)) {
+        continue;
+      }
+      
+      // 제외 키워드 필터링
+      if (shouldExclude(title)) {
+        continue;
+      }
+      
+      newsItems.push({
+        title: cleanTitle(title),
+        link: link,
+        pubDate: formatDate(pubDate),
+        source: source
       });
     }
     
-    return news;
+    return newsItems;
     
   } catch (error) {
-    Logger.log(`뉴스 검색 오류 (${query}): ${error.message}`);
+    Logger.log(`검색 오류 (${query}): ${error.message}`);
     return [];
   }
 }
 
 /**
- * Claude API로 뉴스레터 생성
+ * 최근 뉴스인지 확인
+ */
+function isRecentNews(pubDateStr, days) {
+  try {
+    const pubDate = new Date(pubDateStr);
+    const now = new Date();
+    const diffDays = (now - pubDate) / (1000 * 60 * 60 * 24);
+    return diffDays <= days;
+  } catch (e) {
+    return true;
+  }
+}
+
+/**
+ * 제외 키워드 체크
+ */
+function shouldExclude(title) {
+  const lowerTitle = title.toLowerCase();
+  return EXCLUDE_KEYWORDS.some(keyword => 
+    lowerTitle.includes(keyword.toLowerCase())
+  );
+}
+
+/**
+ * 날짜 포맷
+ */
+function formatDate(dateStr) {
+  try {
+    const date = new Date(dateStr);
+    return Utilities.formatDate(date, 'GMT+9', 'M/d HH:mm');
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+
+// ==========================================
+// Claude API 함수
+// ==========================================
+
+/**
+ * Claude로 뉴스레터 생성
  */
 function generateNewsletterWithClaude(newsData) {
-  Logger.log('Claude로 뉴스 엄선 및 요약 중...');
+  const prompt = buildPrompt(newsData);
   
-  const prompt = `당신은 전문 뉴스 큐레이터입니다. 다음 뉴스 데이터를 엄격한 기준으로 선별하고 간결하게 요약하여 주간 뉴스레터를 작성해주세요.
-
-날짜: ${newsData.date}
-
-=== 수집된 뉴스 ===
-
-## 국제 뉴스
-### 경제
-${formatNewsForPrompt(newsData.international.economy)}
-
-### 정치
-${formatNewsForPrompt(newsData.international.politics)}
-
-## 국내 뉴스
-### 경제
-${formatNewsForPrompt(newsData.domestic.economy)}
-
-### 문화/IT
-${formatNewsForPrompt(newsData.domestic.culture)}
-
-### 정치
-${formatNewsForPrompt(newsData.domestic.politics)}
-
-=== 뉴스 선정 기준 ===
-다음 4가지 기준을 충족하는 뉴스만 선정:
-
-1. 경제 영향력: 국가 경제/시장에 실질적 영향
-2. 긴급성: 오늘/이번 주 알아야 할 정보
-3. 실용성: 개인 재무/투자 결정에 도움
-4. 범용성: 많은 매체에서 중복적으로 다뤄지는 주요 뉴스인 경우
-
-=== 작성 가이드 ===
-1. 각 카테고리별로 가장 중요한 뉴스 4-5개 선별
-2. 각 뉴스는 1-2 문장으로 핵심만 요약
-3. 이모지를 적절히 사용하여 가독성 향상
-4. 전체 길이는 Telegram 메시지로 읽기 편한 정도로
-5. 뉴스 제목 뒤에 [출처] 형식으로 언론사 표시
-6. 중요도: 국제경제 > 국제정치 > 국내경제 > 국내문화 > 국내정치
-7. "**"가 중복적으로 표시되지 않게 하기
-
-제외: 단순 주가 등락(사회적 시사점이 있는 주가 등락은 제외), 홍보성 기사, 1주 이상의 반복 뉴스, 가십성의 뉴스
-
-다음 형식으로 작성:
-
-━━━━━━━━━━━━━━━━━━━━
-📰 주간 뉴스레터
-${newsData.date}
-━━━━━━━━━━━━━━━━━━━━
-
-🌍 국제 뉴스
-
-💰 경제
-• [한 줄 요약 + 영향력 + 출처]
-
-🏛 정치
-• [한 줄 요약 + 영향력 + 출처]
-━━━━━━━━━━━━━━━
-
-🇰🇷 국내 뉴스
-
-💰 경제
-• [한 줄 요약 + 영향력 + 출처]
-
-🎨 사회
-• [한 줄 요약 + 영향력 + 출처]
-
-🏛 정치
-• [한 줄 요약 + 영향력 + 출처]
-━━━━━━━━━━━━━━━━━━━━
-📌 이번 주 핵심:
-[2-3문장 총평]
-━━━━━━━━━━━━━━━━━━━━`;
-
   try {
     const response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method: 'post',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': CLAUDE_API_KEY,
+        'x-api-key': CONFIG.CLAUDE_API_KEY,
         'anthropic-version': '2023-06-01'
       },
       payload: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 2500,
+        model: CONFIG.CLAUDE_MODEL,
+        max_tokens: CONFIG.CLAUDE_MAX_TOKENS,
         messages: [{
           role: 'user',
           content: prompt
         }]
-      })
+      }),
+      muteHttpExceptions: true
     });
     
     const result = JSON.parse(response.getContentText());
+    
+    if (response.getResponseCode() !== 200) {
+      throw new Error(result.error?.message || 'API 오류');
+    }
+    
     return result.content[0].text;
     
   } catch (error) {
     Logger.log('Claude API 오류: ' + error.message);
-    return createBasicNewsletter(newsData);
+    return createFallbackNewsletter(newsData);
   }
 }
 
-function formatNewsForPrompt(newsArray) {
-  if (!newsArray || newsArray.length === 0) return '(뉴스 없음)';
-  return newsArray.map((news, i) => `${i + 1}. ${news.title} [${news.source}]`).join('\n');
+/**
+ * Claude 프롬프트 생성
+ */
+function buildPrompt(newsData) {
+  return `당신은 전문 뉴스 큐레이터입니다. 아래 뉴스를 분석하여 투자자에게 유용한 뉴스레터를 작성해주세요.
+
+날짜: ${newsData.date}
+
+=== 수집된 뉴스 ===
+
+## 🌍 국제 뉴스
+
+### 경제
+${formatNewsArray(newsData.international.economy)}
+
+### 산업/기술
+${formatNewsArray(newsData.international.industry)}
+
+### 정책
+${formatNewsArray(newsData.international.policy)}
+
+## 🇰🇷 국내 뉴스
+
+### 경제
+${formatNewsArray(newsData.domestic.economy)}
+
+### 산업/기술
+${formatNewsArray(newsData.domestic.industry)}
+
+### 정책
+${formatNewsArray(newsData.domestic.policy)}
+
+=== 작성 가이드 ===
+
+1. **뉴스 선정 기준** (4가지 중 2개 이상 충족):
+   - 경제/시장에 실질적 영향
+   - 이번 주 알아야 할 긴급 정보
+   - 투자 결정에 도움되는 실용성
+   - 여러 매체에서 다루는 주요 뉴스
+
+2. **형식 요구사항**:
+   - 각 카테고리별 중요 뉴스 3-4개 선별
+   - 각 뉴스는 1-2문장으로 핵심만 요약
+   - 이모지 적절히 사용
+   - Telegram에서 읽기 편한 길이
+   - **는 제외할 것
+
+3. **제외 대상**:
+   - 단순 주가 등락 (큰 시사점 없는)
+   - 홍보성/광고성 기사
+   - 1주 이상 반복되는 뉴스
+   - 가십성 뉴스
+
+=== 출력 형식 ===
+
+━━━━━━━━━━━━━━━━━━━━
+📊 데일리 투자 뉴스레터
+${newsData.date}
+━━━━━━━━━━━━━━━━━━━━
+
+🚨 오늘의 핵심 (3개)
+• [가장 중요한 뉴스 요약]
+• [두 번째 중요 뉴스]
+• [세 번째 중요 뉴스]
+
+━━━━━━━━━━━━━━━━━━━━
+🌍 국제
+
+💰 경제/마켓
+• [요약] [출처]
+
+🏭 산업/기술
+• [요약] [출처]
+
+🏛 정책
+• [요약] [출처]
+
+━━━━━━━━━━━━━━━━━━━━
+🇰🇷 국내
+
+💰 경제/마켓
+• [요약] [출처]
+
+🏭 산업/기술
+• [요약] [출처]
+
+🏛 정책
+• [요약] [출처]
+
+━━━━━━━━━━━━━━━━━━━━`;
 }
 
-function createBasicNewsletter(newsData) {
-  let newsletter = `📰 주간 뉴스레터 (${newsData.date})\n\n`;
-  newsletter += '🌍 국제 뉴스\n━━━━━━━━━━━━━━━\n💰 경제\n';
-  newsData.international.economy.slice(0, 3).forEach(news => {
-    newsletter += `• ${news.title}\n`;
-  });
-  newsletter += '\n🇰🇷 국내 뉴스\n━━━━━━━━━━━━━━━\n💼 경제\n';
-  newsData.domestic.economy.slice(0, 3).forEach(news => {
-    newsletter += `• ${news.title}\n`;
-  });
-  return newsletter;
+/**
+ * 뉴스 배열을 텍스트로 변환
+ */
+function formatNewsArray(newsArray) {
+  if (!newsArray || newsArray.length === 0) {
+    return '(수집된 뉴스 없음)';
+  }
+  
+  return newsArray.map((news, i) => 
+    `${i + 1}. ${news.title} [${news.source}] (${news.pubDate})`
+  ).join('\n');
 }
+
+/**
+ * Claude 실패시 기본 뉴스레터
+ */
+function createFallbackNewsletter(newsData) {
+  let text = `📰 뉴스레터 (${newsData.date})\n\n`;
+  text += '⚠️ AI 요약 실패 - 원본 헤드라인\n\n';
+  
+  text += '🌍 국제\n';
+  newsData.international.economy.slice(0, 3).forEach(n => {
+    text += `• ${n.title}\n`;
+  });
+  
+  text += '\n🇰🇷 국내\n';
+  newsData.domestic.economy.slice(0, 3).forEach(n => {
+    text += `• ${n.title}\n`;
+  });
+  
+  return text;
+}
+
+
+// ==========================================
+// Telegram 함수
+// ==========================================
 
 /**
  * Telegram 메시지 전송
  */
 function sendTelegramMessage(chatId, message) {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${CONFIG.TELEGRAM_BOT_TOKEN}/sendMessage`;
+  
+  // 메시지 길이 제한 (4096자)
+  const truncatedMessage = message.length > 4000 
+    ? message.substring(0, 4000) + '\n\n... (메시지 잘림)'
+    : message;
   
   const payload = {
     chat_id: chatId,
-    text: message,
+    text: truncatedMessage,
     parse_mode: 'HTML',
     disable_web_page_preview: true
   };
   
-  const response = UrlFetchApp.fetch(url, {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  });
+  try {
+    const response = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    
+    return JSON.parse(response.getContentText());
+    
+  } catch (error) {
+    Logger.log('Telegram 전송 오류: ' + error.message);
+    return { ok: false, description: error.message };
+  }
+}
+
+
+// ==========================================
+// 테스트 함수
+// ==========================================
+
+/**
+ * 뉴스 수집 테스트
+ */
+function testNewsCollection() {
+  Logger.log('=== 뉴스 수집 테스트 ===');
+  const newsData = collectAllNews();
   
-  return response;
+  Logger.log('\n--- 국제 경제 ---');
+  newsData.international.economy.forEach(n => Logger.log(n.title));
+  
+  Logger.log('\n--- 국내 경제 ---');
+  newsData.domestic.economy.forEach(n => Logger.log(n.title));
 }
 
 /**
- * ========== 테스트 & 설정 함수들 ==========
+ * Telegram 연결 테스트
  */
-
-/**
- * 초기 설정 (한 번만 실행)
- */
-function initialSetup() {
-  Logger.log('=== 초기 설정 시작 ===');
+function testTelegram() {
+  const result = sendTelegramMessage(
+    CONFIG.ADMIN_CHAT_ID,
+    '✅ 텔레그램 연결 테스트 성공!\n\n현재 시간: ' + new Date().toLocaleString('ko-KR')
+  );
   
-  // 1. Google Sheets 생성
-  const sheet = getSubscribersSheet();
-  Logger.log('✅ Google Sheets 생성 완료');
-  
-  // 2. Webhook 설정
-  const webhookResult = setWebhook();
-  if (webhookResult) {
-    Logger.log('✅ Webhook 설정 완료');
-  } else {
-    Logger.log('❌ Webhook 설정 실패');
-  }
-  
-  // 3. 관리자를 첫 구독자로 추가
-  if (ADMIN_CHAT_ID && ADMIN_CHAT_ID !== '여기에_관리자_Chat_ID_입력') {
-    handleSubscribe(ADMIN_CHAT_ID, 'admin', 'Admin');
-    Logger.log('✅ 관리자 구독 추가');
-  }
-  
-  Logger.log('=== 초기 설정 완료 ===');
+  Logger.log('Telegram 테스트: ' + JSON.stringify(result));
 }
 
 /**
- * 테스트 뉴스레터 전송 (관리자에게만)
+ * 전체 테스트 (뉴스레터 생성 및 전송)
  */
-function sendTestNewsletter() {
-  if (ADMIN_CHAT_ID === '여기에_관리자_Chat_ID_입력') {
-    Logger.log('❌ ADMIN_CHAT_ID를 먼저 설정하세요!');
-    return;
-  }
-  
-  const testMessage = `📰 테스트 뉴스레터 (구독 시스템)
-
-✨ 구독 시스템이 정상 작동합니다!
-
-🔔 기능:
-• /subscribe - 구독 시작
-• /unsubscribe - 구독 취소
-• /status - 구독 상태
-• /stats - 통계 (관리자만)
-
-✅ 다음 단계:
-1. 봇에게 /subscribe 전송해보기
-2. sendWeeklyNewsletter() 실행하여 실제 뉴스 확인
-3. 트리거 설정
-4. 친구들에게 봇 공유!`;
-
-  sendTelegramMessage(ADMIN_CHAT_ID, testMessage);
-  Logger.log('테스트 메시지 전송 완료');
+function testFullNewsletter() {
+  sendNewsletter();
+}
+/**
+ * 제목 정리 (출처 제거)
+ */
+function cleanTitle(title) {
+  return title.replace(/\s-\s[^-]+$/, '').trim();
 }
 
+/**
+ * 제목에서 출처 추출
+ */
+function extractSource(title) {
+  const match = title.match(/\s-\s([^-]+)$/);
+  return match ? match[1].trim() : '';
+}
