@@ -66,13 +66,15 @@
             margin-bottom: 8px;
             letter-spacing: -0.02em;
         }
-         .page-subtitle {
+        
+        .page-subtitle {
             font-size: 18px;
             color: var(--text-muted);
             font-weight: 300;
             margin-bottom: 48px;
             letter-spacing: -0.02em;
         }
+        
         .scribbles-list {
             display: flex;
             flex-direction: column;
@@ -138,6 +140,14 @@
             padding: 0 24px 24px;
         }
 
+        .scribble-content p {
+            margin-bottom: 12px;
+        }
+
+        .scribble-content p:last-child {
+            margin-bottom: 0;
+        }
+
         .download-btn {
             display: inline-block;
             padding: 10px 20px;
@@ -180,27 +190,51 @@
     
     <div class="page-content">
         <h1 class="page-title">Scribbles</h1>
-        <p class="page-subtitle">Every great project starts with a messy first draft</p>  
-
-        <div class="scribbles-list"> <div class="scribble-item">
-                <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Integrated Parcel Tracking System</div>
-                        <div class="scribble-desc">Pinder </div>
-                    </div>
-                    <div class="toggle-icon">▼</div>
-                </div>
-                <div class="scribble-content">
-                    <p>⏳ WIP</p>
-                </div>
-            </div>
+        <p class="page-subtitle">Every great project starts with a messy first draft</p>
 
         <div class="scribbles-list">
             <div class="scribble-item">
                 <div class="scribble-header">
                     <div class="scribble-info">
+                        <div class="scribble-title">Integrated Parcel Tracking System (Development Paused)</div>
+                        <div class="scribble-desc">
+                            A unified package tracking solution across multiple Korean e-commerce platforms and courier services.
+                            <a href="https://mjtheorganic.github.io/Pinder/" target="_blank" rel="noopener noreferrer" style="color: inherit;">github</a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <p><strong>Market Analysis Findings:</strong></p>
+                    <p>
+                        1. Low TAM - Heavy users (20+ parcels/month) represent &lt;5% of market<br>
+                        2. Adequate existing solutions via shopping apps + KakaoTalk alerts<br>
+                        3. Tracking API limitations require per-platform integration (high friction)<br>
+                        4. Existing solution (Smart Parcel) serves the niche heavy-user segment
+                    </p>
+                    
+                    <p><strong>Technical Insights:</strong></p>
+                    <p>
+                        - Explored Gmail/SMS parsing for auto-registration<br>
+                        - Evaluated shopping mall API integration feasibility<br>
+                        - Privacy constraints limit phone-based tracking lookup
+                    </p>
+                    
+                    <p><strong>Outcome:</strong></p>
+                    <p>
+                        Validated market-first approach before full development.<br>
+                        Decision to pause demonstrates resource allocation judgment.
+                    </p>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
                         <div class="scribble-title">Personal Website</div>
-                        <div class="scribble-desc"><a href="https://mjtheorganic.github.io/portfolio/" target="_blank" rel="noopener noreferrer" style="color: inherit;">github</a></div>
+                        <div class="scribble-desc">
+                            <a href="https://mjtheorganic.github.io/portfolio/" target="_blank" rel="noopener noreferrer" style="color: inherit;">github</a>
+                        </div>
                     </div>
                     <div class="toggle-icon">▼</div>
                 </div>
