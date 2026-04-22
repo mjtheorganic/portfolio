@@ -13,14 +13,12 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         :root {
             --bg: #fafaf9;
             --text: #1a1a1a;
             --text-muted: #999;
             --accent: #2a2a2a;
         }
-
         body {
             font-family: 'Crimson Pro', serif;
             background: var(--bg);
@@ -30,7 +28,6 @@
             min-height: 100vh;
             padding: 60px 40px;
         }
-
         .back-btn {
             position: fixed;
             top: 40px;
@@ -44,44 +41,58 @@
             z-index: 100;
             text-decoration: none;
         }
-
         .back-btn:hover {
             transform: translateX(-4px);
         }
-
         .page-content {
             max-width: 800px;
             margin: 0 auto;
             animation: fadeIn 0.5s ease;
         }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
         .page-title {
             font-size: 36px;
             font-weight: 300;
             margin-bottom: 48px;
             letter-spacing: -0.02em;
         }
-
         .wip-message {
             color: var(--text-muted);
             font-size: 18px;
         }
-
+        .social-links {
+            display: flex;
+            gap: 16px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+        .social-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 16px;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .social-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
         @media (max-width: 640px) {
             body {
                 padding: 40px 20px;
             }
-
             .back-btn {
                 top: 20px;
                 left: 20px;
             }
-
             .page-title {
                 font-size: 28px;
             }
@@ -93,7 +104,24 @@
     
     <div class="page-content">
         <h1 class="page-title">Ideas</h1>
-        <p class="wip-message"> Menstrual health products - under development </p>
+        <p class="wip-message">Menstrual health products - under development</p>
+
+        <div class="social-links">
+            <a href="https://www.instagram.com/periodlog/" target="_blank" class="social-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                    <circle cx="12" cy="12" r="4"/>
+                    <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor"/>
+                </svg>
+                @periodlog
+            </a>
+            <a href="https://www.tiktok.com/@periodlog" target="_blank" class="social-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/>
+                </svg>
+                @periodlog
+            </a>
+        </div>
     </div>
 </body>
 </html>
