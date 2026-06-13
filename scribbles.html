@@ -192,17 +192,35 @@
         <h1 class="page-title">Scribbles</h1>
         <p class="page-subtitle">Every great project starts with a messy first draft</p>
 
-        <div class="scribbles-list">
-            <div class="scribble-item">
-                <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Squat Coach (pref. mobile)</div>
-                        <div class="scribble-desc">
-                            <a href="https://lilcoach.vercel.app/" target="_blank" rel="noopener noreferrer" style="color: inherit;">🔗</a>
-                        </div>
-                    </div>
-                </div>
+<div class="scribble-item">
+    <div class="scribble-header">
+        <div class="scribble-info">
+            <div class="scribble-title">Squat Coach (pref. mobile)</div>
+            <div class="scribble-desc">
+                Real-time squat form coaching — built, deployed, then stopped.
+                <a href="https://lilcoach.vercel.app/" target="_blank" rel="noopener noreferrer" style="color: inherit;">🔗</a>
             </div>
+        </div>
+        <div class="toggle-icon">▼</div>
+    </div>
+    <div class="scribble-content">
+        <p><strong>What I Built:</strong></p>
+        <p>
+            React + MediaPipe web app. Tracks 33 joints → computes angles → compares to a "normal range" built from 115 reps across 16 videos → 
+            plays voice coaching (42 pro-recorded clips). 12 fault types, rep 
+            counting, per-user calibration. Deployed; later extended to plank.
+        </p>
+
+        <p><strong>Why I Stopped:</strong></p>
+        <p>
+            1. Angle-only detection passed 95% of fake/cheated reps as valid;
+            one camera can't catch all faults (knee-cave needs front, depth needs side)<br>
+            2. Camera setup — plank needs a 1.5–2m side placement, impractical in a real gym<br>
+            3. When AI drives code cost toward zero, the human checking output
+            against reality becomes the bottleneck — and that checker was me
+        </p>
+    </div>
+</div>
             
             <div class="scribble-item">
                 <div class="scribble-header">
