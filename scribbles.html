@@ -16,6 +16,7 @@
             --muted: #8a85a3;
             --purple: #4a2f8f;
             --pad: 45px;
+            --card-h: 186px;
         }
 
         body {
@@ -93,6 +94,10 @@
         }
 
         .scribble-item {
+            display: flex;
+            flex-direction: column;
+            height: var(--card-h);          /* every card the same size until opened */
+            overflow: hidden;
             background: #fff;
             border: 1.5px solid var(--text);
             border-radius: 16px;
@@ -110,6 +115,12 @@
         .scribble-item:nth-child(7) { animation-delay: 0.35s; }
         .scribble-item:nth-child(8) { animation-delay: 0.4s; }
 
+        /* an opened card takes the full row and grows to fit */
+        .scribble-item.expanded {
+            grid-column: 1 / -1;
+            height: auto;
+        }
+
         .scribble-item:hover,
         .scribble-item.expanded {
             transform: translate(-2px, -2px);
@@ -117,12 +128,11 @@
         }
 
         .scribble-header {
+            flex: 1;
+            min-height: 0;
             padding: 24px;
-            cursor: pointer;
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
+            flex-direction: column;
         }
 
         .scribble-info {
@@ -136,11 +146,18 @@
             line-height: 1.3;
         }
 
+        .expandable .scribble-header { cursor: pointer; }
+
         .scribble-desc {
             font-size: 15px;
             line-height: 1.45;
             margin-top: 4px;
+            white-space: nowrap;            /* one line only */
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .scribble-item.expanded .scribble-header { flex: none; }
 
         .meta-row {
             display: flex;
@@ -148,6 +165,27 @@
             gap: 4px 24px;
             margin-top: 12px;
             font-size: 13px;
+            align-items: center;
+        }
+
+        /* arrow at the end of the Status / Platform line, shown on hover */
+        .more-arrow {
+            margin-left: auto;
+            font-size: 16px;
+            line-height: 1;
+            opacity: 0;
+            transform: translateX(-6px);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .scribble-item:hover .more-arrow {
+            opacity: 1;
+            transform: none;
+        }
+
+        .scribble-item.expanded .more-arrow {
+            opacity: 1;
+            transform: rotate(90deg);
         }
 
         .meta-label {
@@ -171,7 +209,8 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 14px;
+            margin-top: auto;               /* links sit at the bottom of every card */
+            padding-top: 14px;
         }
 
         .link-chip {
@@ -295,6 +334,7 @@
             .page-title { font-size: 28px; }
             .page-title sup, .page-subtitle { font-size: 16px; }
             .scribbles-list { grid-template-columns: 1fr; gap: 18px; }
+            .scribble-desc { font-size: 14px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -314,59 +354,56 @@
 
     <main>
         <div class="scribbles-list">
-
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Droptrip</div>
-                        <div class="scribble-desc">Turns travel videos into a map and itinerary. Just drop a link, and every place mentioned gets saved automatically.</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
-                            <span><span class="meta-label">Platform</span>PC, Mobile</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://www.thedroptrip.com" target="_blank" rel="noopener noreferrer">
-                                <img class="app-icon" src="https://www.thedroptrip.com/icon.png" alt="Droptrip logo">
-                                thedroptrip.com (website)
-                            </a>
-                        </div>
+                    <div class="scribble-title">Droptrip</div>
+                    <div class="scribble-desc">Travel videos into a map and itinerary</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                        <span><span class="meta-label">Platform</span>PC, Mobile</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://www.thedroptrip.com" target="_blank" rel="noopener noreferrer">
+                            <img class="app-icon" src="https://www.thedroptrip.com/icon.png" alt="Droptrip logo">
+                            thedroptrip.com (website)
+                        </a>
+                    </div>
+                </div>
+                <div class="scribble-content">
+                    <p>Drop a link, and every place mentioned gets saved automatically.</p>
                 </div>
             </div>
 
             <div class="scribble-item">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">movedd</div>
-                        <div class="scribble-desc">Workout Tracker</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
-                            <span><span class="meta-label">Platform</span>iOS</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://apps.apple.com/ru/app/movedd/id6802011239?l=en-GB" target="_blank" rel="noopener noreferrer">
-                                <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1a/6b/d1/1a6bd122-5890-4264-8291-6fa57ddbb866/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" alt="movedd logo">
-                                Movedd (iOS)
-                            </a>
-                        </div>
+                    <div class="scribble-title">movedd</div>
+                    <div class="scribble-desc">Workout Tracker</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                        <span><span class="meta-label">Platform</span>iOS</span>
+                    </div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://apps.apple.com/ru/app/movedd/id6802011239?l=en-GB" target="_blank" rel="noopener noreferrer">
+                            <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1a/6b/d1/1a6bd122-5890-4264-8291-6fa57ddbb866/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" alt="movedd logo">
+                            Movedd (iOS)
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Squat Coach</div>
-                        <div class="scribble-desc">Real-time squat form coaching</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
-                            <span><span class="meta-label">Platform</span>Mobile</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://lilcoach.vercel.app/" target="_blank" rel="noopener noreferrer">lilcoach.vercel.app (website)</a>
-                        </div>
+                    <div class="scribble-title">Squat Coach</div>
+                    <div class="scribble-desc">Real-time squat form coaching</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        <span><span class="meta-label">Platform</span>Mobile</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://lilcoach.vercel.app/" target="_blank" rel="noopener noreferrer">lilcoach.vercel.app (website)</a>
+                    </div>
                 </div>
                 <div class="scribble-content">
                     <p><strong>What I Built:</strong></p>
@@ -386,19 +423,18 @@
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">IPO Check-up</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
-                            <span><span class="meta-label">Platform</span>PC</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://preipocheckup.netlify.app/" target="_blank" rel="noopener noreferrer">preipocheckup.netlify.app (website)</a>
-                        </div>
+                    <div class="scribble-title">IPO Check-up</div>
+                    <div class="scribble-desc">KOSPI/KOSDAQ listing track checker</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        <span><span class="meta-label">Platform</span>PC</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://preipocheckup.netlify.app/" target="_blank" rel="noopener noreferrer">preipocheckup.netlify.app (website)</a>
+                    </div>
                 </div>
                 <div class="scribble-content">
                     <p><strong>Why I Stopped:</strong></p>
@@ -406,50 +442,46 @@
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Menstrual Disc</div>
-                        <div class="scribble-desc">Started a community where Korean users can discuss menstrual discs, with the long-term goal of launching a brand and product.</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://www.tiktok.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="TikTok @periodlog">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
-                                TikTok
-                            </a>
-                            <a class="link-chip" href="https://www.youtube.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="YouTube @periodlog">
-                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
-                                YouTube
-                            </a>
-                        </div>
+                    <div class="scribble-title">Menstrual Disc</div>
+                    <div class="scribble-desc">Long-term goal: a brand and a product</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://www.tiktok.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="TikTok @periodlog">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
+                            TikTok
+                        </a>
+                        <a class="link-chip" href="https://www.youtube.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="YouTube @periodlog">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+                            YouTube
+                        </a>
+                    </div>
                 </div>
                 <div class="scribble-content">
+                    <p>Started a community where Korean users can discuss menstrual discs, with the long-term goal of launching a brand and product.</p>
                     <p><strong>Why I Stopped:</strong></p>
-                    <p>
-                        Validation showed the TAM was too small to pursue, and shifting Korean users' perception of the product would likely take 5+ years.
-                    </p>
+                    <p>Validation showed the TAM was too small to pursue, and shifting Korean users' perception of the product would likely take 5+ years.</p>
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Parcel Tracking System</div>
-                        <div class="scribble-desc">A unified package tracking solution across multiple Korean e-commerce platforms and courier services.</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://mjtheorganic.github.io/Pinder/" target="_blank" rel="noopener noreferrer">Pinder (website)</a>
-                        </div>
+                    <div class="scribble-title">Parcel Tracking System</div>
+                    <div class="scribble-desc">Unified package tracking solution</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://mjtheorganic.github.io/Pinder/" target="_blank" rel="noopener noreferrer">Pinder (website)</a>
+                    </div>
                 </div>
                 <div class="scribble-content">
+                    <p>A unified package tracking solution across multiple Korean e-commerce platforms and courier services.</p>
                     <p><strong>Market Analysis Findings:</strong></p>
                     <p>
                         1. Low TAM - Heavy users (20+ parcels/month) represent &lt;5% of market<br>
@@ -471,36 +503,35 @@
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Personal Website</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
-                        </div>
-                        <div class="link-row">
-                            <a class="link-chip" href="https://mjtheorganic.github.io/portfolio/" target="_blank" rel="noopener noreferrer">mjtheorganic.github.io (website)</a>
-                        </div>
+                    <div class="scribble-title">Personal Website</div>
+                    <div class="scribble-desc">This portfolio site</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
+                    <div class="link-row">
+                        <a class="link-chip" href="https://mjtheorganic.github.io/portfolio/" target="_blank" rel="noopener noreferrer">mjtheorganic.github.io (website)</a>
+                    </div>
                 </div>
                 <div class="scribble-content">
                     <a href="personal_website.zip" class="download-btn" download>Download</a>
                 </div>
             </div>
 
-            <div class="scribble-item">
+            <div class="scribble-item expandable">
                 <div class="scribble-header">
-                    <div class="scribble-info">
-                        <div class="scribble-title">Weekly Newsletter</div>
-                        <div class="scribble-desc">Telegram bot (@MJnewsletter_bot)</div>
-                        <div class="meta-row">
-                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
-                        </div>
+                    <div class="scribble-title">Weekly Newsletter</div>
+                    <div class="scribble-desc">AI-curated weekly news digest</div>
+                    <div class="meta-row">
+                        <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        <span><span class="meta-label">Platform</span>Telegram bot</span>
+                        <span class="more-arrow" aria-hidden="true">→</span>
                     </div>
-                    <div class="toggle-icon">▼</div>
                 </div>
                 <div class="scribble-content">
+                    <p>Telegram bot (@MJnewsletter_bot)</p>
                     <a href="newsletter_appscript.txt" class="download-btn" download>Download</a>
                 </div>
             </div>
@@ -511,10 +542,9 @@
     <div class="cursor" id="cursor"></div>
 
     <script>
-        document.querySelectorAll('.scribble-header').forEach(header => {
+        document.querySelectorAll('.expandable .scribble-header').forEach(header => {
             header.addEventListener('click', (e) => {
                 if (e.target.closest('a')) return;
-                e.stopPropagation();
                 header.closest('.scribble-item').classList.toggle('expanded');
             });
         });
