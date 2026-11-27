@@ -70,96 +70,6 @@
             -webkit-user-drag: none;
         }
 
-        /* ---------- lamp: warm light that flickers now and then ---------- */
-        /* positions are % of the picture (1447 x 1087) */
-        .lamp-glow {
-            position: absolute;
-            left: 33%;
-            top: 23%;
-            width: 22%;
-            height: 30%;
-            background:
-                radial-gradient(ellipse 30% 14% at 50% 6%, rgba(255, 244, 200, 0.95), transparent 70%),
-                radial-gradient(ellipse 55% 85% at 50% 0%, rgba(255, 196, 120, 0.55), transparent 75%);
-            mix-blend-mode: screen;
-            pointer-events: none;
-            animation: lamp 7s infinite;
-        }
-
-        /* mostly steady, with a short burst of flicker */
-        @keyframes lamp {
-            0%, 62%, 100% { opacity: 0.55; }
-            64% { opacity: 0.1; }
-            66% { opacity: 0.7; }
-            68% { opacity: 0.05; }
-            71% { opacity: 0.6; }
-            73% { opacity: 0.25; }
-            76% { opacity: 0.75; }
-            80% { opacity: 0.55; }
-        }
-
-        /* the beam on the wall dims when the bulb drops */
-        .lamp-dim {
-            position: absolute;
-            left: 33%;
-            top: 23%;
-            width: 22%;
-            height: 30%;
-            background:
-                radial-gradient(ellipse 28% 10% at 50% 5%, rgba(120, 100, 150, 0.7), transparent 80%),
-                radial-gradient(ellipse 60% 95% at 50% 0%, rgba(80, 70, 140, 0.6), transparent 78%);
-            mix-blend-mode: multiply;
-            pointer-events: none;
-            opacity: 0;
-            animation: lamp-dim 7s infinite;
-        }
-
-        @keyframes lamp-dim {
-            0%, 62%, 100% { opacity: 0; }
-            64% { opacity: 0.8; }
-            66% { opacity: 0; }
-            68% { opacity: 1; }
-            71% { opacity: 0.1; }
-            73% { opacity: 0.6; }
-            76% { opacity: 0; }
-        }
-
-        /* ---------- monitor: screen turns off, then back on ---------- */
-        .screen {
-            position: absolute;
-            inset: 0;
-            clip-path: polygon(59.2% 36.9%, 73.1% 39.7%, 73.25% 50.1%, 59.2% 47.75%);
-            background: linear-gradient(160deg, #3a3a4a 0%, #1c1c26 55%, #2a2a36 100%);
-            pointer-events: none;
-            opacity: 0;
-            animation: screen 10s infinite;
-        }
-
-        @keyframes screen {
-            0%, 55% { opacity: 0; }
-            58%, 80% { opacity: 1; }      /* off */
-            82% { opacity: 0; filter: brightness(1); }
-            83% { opacity: 0.35; }        /* little power-on blink */
-            85%, 100% { opacity: 0; }
-        }
-
-        .screen-flash {
-            position: absolute;
-            inset: 0;
-            clip-path: polygon(59.2% 36.9%, 73.1% 39.7%, 73.25% 50.1%, 59.2% 47.75%);
-            background: #fff;
-            mix-blend-mode: soft-light;
-            pointer-events: none;
-            opacity: 0;
-            animation: screen-flash 10s infinite;
-        }
-
-        @keyframes screen-flash {
-            0%, 84% { opacity: 0; }
-            86% { opacity: 0.9; }
-            92%, 100% { opacity: 0; }
-        }
-
         /* ---------- quadrant colour (sits behind the room) ---------- */
         .quad {
             position: absolute;
@@ -317,7 +227,7 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .room-float, .lamp-glow, .lamp-dim, .screen, .screen-flash { animation: none; }
+            .room-float { animation: none; }
             .reveal, .preloader div { transition: none; }
         }
     </style>
@@ -330,10 +240,6 @@
             <div class="room-float">
                 <div class="room-wrap" id="room">
                     <img class="room" src="room.webp" width="1447" height="1087" alt="">
-                    <div class="lamp-glow"></div>
-                    <div class="lamp-dim"></div>
-                    <div class="screen"></div>
-                    <div class="screen-flash"></div>
                 </div>
             </div>
         </div>
@@ -417,7 +323,7 @@
             if (!e.relatedTarget || !e.relatedTarget.closest('.hit.q4')) body.classList.remove('hover-contact');
         });
 
-        // cursor + room leans toward the mouse
+        // cursor + room leans slightly toward the mouse
         const room = document.getElementById('room');
         const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         let mx = innerWidth / 2, my = innerHeight / 2, tx = 0, ty = 0;
@@ -434,7 +340,7 @@
                 const dx = mx / innerWidth - 0.5, dy = my / innerHeight - 0.5;
                 tx += (dx - tx) * 0.06;
                 ty += (dy - ty) * 0.06;
-                room.style.transform = `translate(${tx * 30}px, ${ty * 20}px) rotate(${tx * 3}deg)`;
+                room.style.transform = `translate(${tx * 30}px, ${ty * 20}px) rotate(${tx * 1.5}deg)`;   // half the earlier lean
                 requestAnimationFrame(loop);
             })();
         }
