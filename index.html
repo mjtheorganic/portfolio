@@ -6,144 +6,438 @@
     <title>MJ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #fafaf9;
+            --bg: #efecfa;
             --text: #1a1a1a;
-            --text-muted: #999;
-            --accent: #2a2a2a;
+            --purple: #4a2f8f;   /* Scribbles quadrant */
+            --pink: #b8336a;     /* Contact quadrant */
+            --pad: 45px;
         }
+
+        html, body { height: 100%; }
 
         body {
-            font-family: 'Crimson Pro', serif;
+            font-family: 'Inter Tight', system-ui, sans-serif;
+            font-weight: 300;
             background: var(--bg);
             color: var(--text);
-            line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            overflow: hidden;
         }
 
-        .home {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            animation: fadeIn 0.8s ease;
+        a { color: inherit; text-decoration: none; }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
         }
 
-        .emoji {
-            font-size: 64px;
-            margin-bottom: 32px;
-            animation: float 3s ease-in-out infinite;
+        /* ---------- floating room ---------- */
+        .stage {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            z-index: 1;
+            pointer-events: none;
         }
+
+        .room-float { animation: float 4s ease-in-out infinite; }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .title {
-            font-size: 48px;
-            font-weight: 300;
-            letter-spacing: -0.02em;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .nav {
-            display: flex;
-            gap: 32px;
-            font-size: 18px;
-        }
-
-        .nav a {
-            color: var(--text);
-            text-decoration: none;
-            cursor: pointer;
+        .room-wrap {
             position: relative;
-            transition: color 0.3s ease;
+            width: min(70vw, calc(100dvh * 0.78 * 1.333));
+            will-change: transform;
         }
 
-        .nav a::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--text);
-            transition: width 0.3s ease;
-        }
-
-        .nav a:hover {
-            color: var(--accent);
-        }
-
-        .nav a:hover::after {
+        .room {
+            display: block;
             width: 100%;
+            height: auto;
+            user-select: none;
+            -webkit-user-drag: none;
         }
 
-        .contact-email {
-            color: var(--text-muted);
-            font-size: 16px;
-            margin-top: 24px;
-            animation: fadeIn 0.5s ease;
+        /* ---------- lamp: warm light that flickers now and then ---------- */
+        /* positions are % of the picture (1447 x 1087) */
+        .lamp-glow {
+            position: absolute;
+            left: 33%;
+            top: 23%;
+            width: 22%;
+            height: 30%;
+            background:
+                radial-gradient(ellipse 30% 14% at 50% 6%, rgba(255, 244, 200, 0.95), transparent 70%),
+                radial-gradient(ellipse 55% 85% at 50% 0%, rgba(255, 196, 120, 0.55), transparent 75%);
+            mix-blend-mode: screen;
+            pointer-events: none;
+            animation: lamp 7s infinite;
+        }
+
+        /* mostly steady, with a short burst of flicker */
+        @keyframes lamp {
+            0%, 62%, 100% { opacity: 0.55; }
+            64% { opacity: 0.1; }
+            66% { opacity: 0.7; }
+            68% { opacity: 0.05; }
+            71% { opacity: 0.6; }
+            73% { opacity: 0.25; }
+            76% { opacity: 0.75; }
+            80% { opacity: 0.55; }
+        }
+
+        /* the beam on the wall dims when the bulb drops */
+        .lamp-dim {
+            position: absolute;
+            left: 33%;
+            top: 23%;
+            width: 22%;
+            height: 30%;
+            background:
+                radial-gradient(ellipse 28% 10% at 50% 5%, rgba(120, 100, 150, 0.7), transparent 80%),
+                radial-gradient(ellipse 60% 95% at 50% 0%, rgba(80, 70, 140, 0.6), transparent 78%);
+            mix-blend-mode: multiply;
+            pointer-events: none;
+            opacity: 0;
+            animation: lamp-dim 7s infinite;
+        }
+
+        @keyframes lamp-dim {
+            0%, 62%, 100% { opacity: 0; }
+            64% { opacity: 0.8; }
+            66% { opacity: 0; }
+            68% { opacity: 1; }
+            71% { opacity: 0.1; }
+            73% { opacity: 0.6; }
+            76% { opacity: 0; }
+        }
+
+        /* ---------- monitor: screen turns off, then back on ---------- */
+        .screen {
+            position: absolute;
+            inset: 0;
+            clip-path: polygon(59.2% 36.9%, 73.1% 39.7%, 73.25% 50.1%, 59.2% 47.75%);
+            background: linear-gradient(160deg, #3a3a4a 0%, #1c1c26 55%, #2a2a36 100%);
+            pointer-events: none;
+            opacity: 0;
+            animation: screen 10s infinite;
+        }
+
+        @keyframes screen {
+            0%, 55% { opacity: 0; }
+            58%, 80% { opacity: 1; }      /* off */
+            82% { opacity: 0; filter: brightness(1); }
+            83% { opacity: 0.35; }        /* little power-on blink */
+            85%, 100% { opacity: 0; }
+        }
+
+        .screen-flash {
+            position: absolute;
+            inset: 0;
+            clip-path: polygon(59.2% 36.9%, 73.1% 39.7%, 73.25% 50.1%, 59.2% 47.75%);
+            background: #fff;
+            mix-blend-mode: soft-light;
+            pointer-events: none;
+            opacity: 0;
+            animation: screen-flash 10s infinite;
+        }
+
+        @keyframes screen-flash {
+            0%, 84% { opacity: 0; }
+            86% { opacity: 0.9; }
+            92%, 100% { opacity: 0; }
+        }
+
+        /* ---------- quadrant colour (sits behind the room) ---------- */
+        .quad {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.35s ease-in-out;
+        }
+
+        .quad.q3 { background: var(--purple); }
+        .quad.q4 { background: var(--pink); }
+
+        body.hover-scribbles .quad.q3,
+        body.hover-contact .quad.q4 { opacity: 1; }
+
+        /* ---------- corner labels ---------- */
+        .corner {
+            position: absolute;
+            z-index: 3;
+            font-size: 38px;
+            font-weight: 400;
+            line-height: 1.315;
+            letter-spacing: -0.01em;
+        }
+
+        .tl { top: var(--pad); left: var(--pad); }
+        .bl { bottom: var(--pad); left: var(--pad); }
+        .br { bottom: var(--pad); right: var(--pad); text-align: right; }
+
+        /* the whole quadrant is the hover/click target */
+        .hit {
+            position: absolute;
+            inset: 0;
+            z-index: 4;
+            cursor: pointer;
+            background: transparent;
+            border: 0;
+        }
+
+        body.hover-scribbles .bl,
+        body.hover-contact .br { color: #fff; }
+
+        .bl span { position: relative; }
+
+        .bl sup {
+            position: absolute;
+            top: -0.2em;
+            left: 100%;
+            margin-left: 6px;
+            font-size: 21px;
+            font-weight: 300;
+        }
+
+        .email {
+            display: block;
+            font-size: 21px;
+            font-weight: 300;
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+            position: relative;
+            z-index: 5;
+        }
+
+        .email:hover { text-decoration: underline; }
+
+        body.contact-open .email {
+            opacity: 1;
+            transform: none;
+            pointer-events: auto;
+        }
+
+        /* the email must sit above the hit layer to stay clickable */
+        body.contact-open .br { z-index: 5; }
+
+        /* ---------- preloader ---------- */
+        .preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .preloader div {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50%;
+            background: #e7e3f4;
+            border-top: 2px solid #dcd8ea;
+            transition: transform 0.6s cubic-bezier(0.5, 0, 0.75, 0);
+        }
+
+        .preloader div:first-child { left: 0; }
+        .preloader div:last-child {
+            right: 0;
+            border-left: 1px solid #dcd8ea;
+            transition-delay: 0.2s;
+        }
+
+        .loaded .preloader div { transform: translateY(101%); }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.6s ease, transform 0.6s ease, color 0.35s ease-in-out;
+        }
+
+        .loaded .reveal { opacity: 1; transform: none; }
+        .loaded .reveal.d1 { transition-delay: 0.7s, 0.7s, 0s; }
+        .loaded .reveal.d2 { transition-delay: 0.9s, 0.9s, 0s; }
+
+        /* ---------- cursor ---------- */
+        .cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            border-radius: 50%;
+            background: #fff;
+            mix-blend-mode: difference;
+            pointer-events: none;
+            z-index: 200;
+            opacity: 0;
+            transition: width 0.25s ease, height 0.25s ease, margin 0.25s ease, opacity 0.2s ease;
             display: none;
         }
 
-        .contact-email.show {
-            display: block;
+        .cursor.on { opacity: 1; }
+
+        .cursor.big {
+            width: 44px;
+            height: 44px;
+            margin: -22px 0 0 -22px;
         }
 
-        @media (max-width: 640px) {
-            .title {
-                font-size: 36px;
-            }
+        @media (hover: hover) and (pointer: fine) {
+            body, a, .hit { cursor: none; }
+            .cursor { display: block; }
+        }
 
-            .nav {
-                flex-direction: column;
-                gap: 16px;
-                align-items: center;
-            }
+        /* ---------- responsive ---------- */
+        @media (max-width: 1280px) { :root { --pad: 35px; } }
 
-            .emoji {
-                font-size: 48px;
-            }
+        @media (max-width: 768px) {
+            :root { --pad: 25px; }
+            .corner { font-size: 28px; }
+            .email, .bl sup { font-size: 16px; }
+            .room-wrap { width: 96vw; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .room-float, .lamp-glow, .lamp-dim, .screen, .screen-flash { animation: none; }
+            .reveal, .preloader div { transition: none; }
         }
     </style>
 </head>
 <body>
-    <div class="home">
-        <div class="emoji">🎟️</div>
-        <div class="title">MJ the Explorer</div>
-        <nav class="nav">
-            <a href="scribbles.html">Scribbles</a>
-            <a href="#" id="contactLink">Contact</a>
-        </nav>
-        <div class="contact-email" id="contactEmail">
-            minjinlee1214@gmail.com
+    <div class="preloader" aria-hidden="true"><div></div><div></div></div>
+
+    <main class="scene">
+        <div class="stage" aria-hidden="true">
+            <div class="room-float">
+                <div class="room-wrap" id="room">
+                    <img class="room" src="room.webp" width="1447" height="1087" alt="">
+                    <div class="lamp-glow"></div>
+                    <div class="lamp-dim"></div>
+                    <div class="screen"></div>
+                    <div class="screen-flash"></div>
+                </div>
+            </div>
         </div>
-    </div>
+
+        <div class="quad q3" aria-hidden="true"></div>
+        <div class="quad q4" aria-hidden="true"></div>
+
+        <h1 class="corner tl reveal d1">MJ the Explorer</h1>
+
+        <div class="corner bl reveal d2"><span>Scribbles<sup>8</sup></span></div>
+        <div class="corner br reveal d2">
+            Contact
+            <a class="email" href="mailto:minjinlee1214@gmail.com" tabindex="-1">minjinlee1214@gmail.com</a>
+        </div>
+
+        <a class="hit q3" href="scribbles.html" data-area="scribbles" aria-label="Scribbles"></a>
+        <button class="hit q4" type="button" data-area="contact" aria-label="Contact" aria-expanded="false"></button>
+    </main>
+
+    <div class="cursor" id="cursor"></div>
 
     <script>
-        document.getElementById('contactLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('contactEmail');
-            email.classList.toggle('show');
+        const body = document.body;
+        const cursor = document.getElementById('cursor');
+
+        // intro
+        const reveal = () => body.classList.add('loaded');
+        window.addEventListener('load', () => setTimeout(reveal, 50));
+        setTimeout(reveal, 2500);
+
+        // tilted split, traced from MJ's sketch:
+        //   one line falls gently left → right (about 7°),
+        //   the other drops from the centre leaning right (about 12° off vertical)
+        const SPLIT = { cx: 0.506, cy: 0.56, flat: 7.3, steep: 77.6 };  // centre as share of screen; angles: 0 = right, 90 = down
+        const scene = document.querySelector('.scene');
+        function wedge(a1, a2) {
+            const w = scene.clientWidth, h = scene.clientHeight, cx = w * SPLIT.cx, cy = h * SPLIT.cy;
+            const hit = (deg) => {          // where a ray from the centre leaves the screen
+                const r = deg * Math.PI / 180, dx = Math.cos(r), dy = Math.sin(r);
+                const t = Math.min(dx ? (dx > 0 ? w - cx : -cx) / dx : Infinity,
+                                   dy ? (dy > 0 ? h - cy : -cy) / dy : Infinity);
+                return [cx + dx * t, cy + dy * t];
+            };
+            const corners = [[w, 0], [w, h], [0, h], [0, 0]]
+                .map(([x, y]) => ({ x, y, a: ((Math.atan2(y - cy, x - cx) * 180 / Math.PI) - a1 + 720) % 360 }))
+                .filter(c => c.a > 0 && c.a < a2 - a1)
+                .sort((p, q) => p.a - q.a);
+            const pts = [[cx, cy], hit(a1), ...corners.map(c => [c.x, c.y]), hit(a2)];
+            return `polygon(${pts.map(([x, y]) => `${x}px ${y}px`).join(',')})`;
+        }
+        function layout() {
+            const q3 = wedge(SPLIT.steep, 180 + SPLIT.flat);   // Scribbles: below-left
+            const q4 = wedge(SPLIT.flat, SPLIT.steep);         // Contact: below-right
+            document.querySelectorAll('.q3').forEach(el => el.style.clipPath = q3);
+            document.querySelectorAll('.q4').forEach(el => el.style.clipPath = q4);
+        }
+        layout();
+        window.addEventListener('resize', layout);
+
+        // quadrant hover → tint
+        document.querySelectorAll('.hit').forEach(el => {
+            const cls = 'hover-' + el.dataset.area;
+            el.addEventListener('pointerenter', () => { body.classList.add(cls); cursor.classList.add('big'); });
+            el.addEventListener('pointerleave', () => { body.classList.remove(cls); cursor.classList.remove('big'); });
+            el.addEventListener('focus', () => body.classList.add(cls));
+            el.addEventListener('blur', () => body.classList.remove(cls));
         });
+
+        // contact → show email
+        const contactBtn = document.querySelector('.hit.q4');
+        const contactLabel = document.querySelector('.br');
+        const email = document.querySelector('.email');
+        contactBtn.addEventListener('click', () => {
+            const open = body.classList.toggle('contact-open');
+            contactBtn.setAttribute('aria-expanded', open);
+            email.tabIndex = open ? 0 : -1;
+        });
+        // keep the pink tint while the pointer is on the email
+        contactLabel.addEventListener('pointerenter', () => body.classList.add('hover-contact'));
+        contactLabel.addEventListener('pointerleave', (e) => {
+            if (!e.relatedTarget || !e.relatedTarget.closest('.hit.q4')) body.classList.remove('hover-contact');
+        });
+
+        // cursor + room leans toward the mouse
+        const room = document.getElementById('room');
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let mx = innerWidth / 2, my = innerHeight / 2, tx = 0, ty = 0;
+
+        window.addEventListener('pointermove', (e) => {
+            mx = e.clientX; my = e.clientY;
+            cursor.style.transform = `translate(${mx}px, ${my}px)`;
+            cursor.classList.add('on');
+        });
+        document.addEventListener('pointerleave', () => cursor.classList.remove('on'));
+
+        if (!reduced) {
+            (function loop() {
+                const dx = mx / innerWidth - 0.5, dy = my / innerHeight - 0.5;
+                tx += (dx - tx) * 0.06;
+                ty += (dy - ty) * 0.06;
+                room.style.transform = `translate(${tx * 30}px, ${ty * 20}px) rotate(${tx * 3}deg)`;
+                requestAnimationFrame(loop);
+            })();
+        }
     </script>
 </body>
 </html>
