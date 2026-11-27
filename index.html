@@ -126,7 +126,7 @@
 
         .email {
             display: block;
-            font-size: 21px;
+            font-size: 13px;   /* ~60% of the earlier 21px */
             font-weight: 300;
             margin-top: 4px;
             opacity: 0;
@@ -222,7 +222,8 @@
         @media (max-width: 768px) {
             :root { --pad: 25px; }
             .corner { font-size: 28px; }
-            .email, .bl sup { font-size: 16px; }
+            .bl sup { font-size: 16px; }
+            .email { font-size: 11px; }
             .room-wrap { width: 96vw; }
         }
 
