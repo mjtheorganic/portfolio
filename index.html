@@ -6,7 +6,7 @@
     <title>MJ</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -27,21 +27,30 @@
             color: var(--text);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 60px 40px;
         }
 
-        .home {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            animation: fadeIn 0.8s ease;
+
+        .page-content {
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero {
+            text-align: center;
+            padding: 40px 0 72px;
         }
 
         .emoji {
-            font-size: 64px;
-            margin-bottom: 32px;
+            font-size: 56px;
+            margin-bottom: 24px;
             animation: float 3s ease-in-out infinite;
         }
 
@@ -50,100 +59,433 @@
             50% { transform: translateY(-10px); }
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .title {
-            font-size: 48px;
+        .hero-title {
+            font-size: 44px;
             font-weight: 300;
             letter-spacing: -0.02em;
-            margin-bottom: 40px;
-            text-align: center;
+            margin-bottom: 12px;
         }
 
-        .nav {
-            display: flex;
-            gap: 32px;
+        .hero-email {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .hero-email:hover {
+            color: var(--text);
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        
+        .page-subtitle {
             font-size: 18px;
+            color: var(--text-muted);
+            font-weight: 300;
+            margin-bottom: 48px;
+            letter-spacing: -0.02em;
+        }
+        
+        .scribbles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
         }
 
-        .nav a {
+        .scribble-item {
+            border: 1px solid #e5e5e5;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .scribble-header {
+            padding: 24px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .scribble-header:hover {
+            background: #fafafa;
+        }
+
+        .scribble-info {
+            flex: 1;
+        }
+
+        .scribble-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .scribble-desc {
+            font-size: 16px;
+            font-weight: 400;
+            color: var(--text);
+        }
+
+        .link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .link-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border: none;
+            border-radius: 999px;
+            background: #efefed;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
             color: var(--text);
             text-decoration: none;
-            cursor: pointer;
-            position: relative;
-            transition: color 0.3s ease;
+            transition: background 0.2s ease;
         }
 
-        .nav a::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--text);
-            transition: width 0.3s ease;
+        .link-chip:hover {
+            background: #e4e4e1;
         }
 
-        .nav a:hover {
-            color: var(--accent);
+        .meta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 20px;
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text);
         }
 
-        .nav a:hover::after {
-            width: 100%;
-        }
-
-        .contact-email {
+        .meta-label {
             color: var(--text-muted);
-            font-size: 16px;
-            margin-top: 24px;
-            animation: fadeIn 0.5s ease;
-            display: none;
+            margin-right: 6px;
         }
 
-        .contact-email.show {
-            display: block;
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 6px;
+            vertical-align: 1px;
+            background: #b5b5b5;
+        }
+
+        .status-dot.live {
+            background: #3fa66b;
+        }
+
+        .link-chip svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .link-chip .app-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .toggle-icon {
+            font-size: 16px;
+            color: var(--text-muted);
+            transition: transform 0.3s ease;
+            user-select: none;
+            margin-top: 4px;
+        }
+
+        .scribble-item.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .scribble-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 24px;
+        }
+
+        .scribble-item.expanded .scribble-content {
+            max-height: 500px;
+            padding: 0 24px 24px;
+        }
+
+        .scribble-content p {
+            margin-bottom: 12px;
+        }
+
+        .scribble-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background: #3a3a3a;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         @media (max-width: 640px) {
-            .title {
-                font-size: 36px;
+            body {
+                padding: 40px 20px;
             }
 
-            .nav {
-                flex-direction: column;
-                gap: 16px;
-                align-items: center;
+            .page-title {
+                font-size: 28px;
+            }
+
+            .hero-title {
+                font-size: 34px;
             }
 
             .emoji {
-                font-size: 48px;
+                font-size: 44px;
+            }
+
+            .scribble-title {
+                font-size: 18px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="home">
-        <div class="emoji">🎟️</div>
-        <div class="title">MJ the Explorer</div>
-        <nav class="nav">
-            <a href="scribbles.html">Scribbles</a>
-            <a href="ideas.html">Ideas</a>
-            <a href="#" id="contactLink">Contact</a>
-        </nav>
-        <div class="contact-email" id="contactEmail">
-            minjinlee1214@gmail.com
+    
+    <div class="page-content">
+        <header class="hero">
+            <div class="emoji">🎟️</div>
+            <h1 class="hero-title">MJ the Explorer</h1>
+            <a class="hero-email" href="mailto:minjinlee1214@gmail.com">minjinlee1214@gmail.com</a>
+        </header>
+
+        <h2 class="page-title">Scribbles</h2>
+        <p class="page-subtitle">Every great project starts with a messy first draft</p>
+
+        <div class="scribbles-list">
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Droptrip</div>
+                        <div class="scribble-desc">Turns travel videos into a map and itinerary. Just drop a link, and every place mentioned gets saved automatically.</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                            <span><span class="meta-label">Platform</span>PC, Mobile</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://www.thedroptrip.com" target="_blank" rel="noopener noreferrer">
+                                <img class="app-icon" src="https://www.thedroptrip.com/icon.png" alt="Droptrip logo">
+                                thedroptrip.com (website)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">movedd</div>
+                        <div class="scribble-desc">Workout Tracker</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                            <span><span class="meta-label">Platform</span>iOS</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://apps.apple.com/ru/app/movedd/id6802011239?l=en-GB" target="_blank" rel="noopener noreferrer">
+                                <img class="app-icon" src="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/1a/6b/d1/1a6bd122-5890-4264-8291-6fa57ddbb866/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" alt="movedd logo">
+                                Movedd (iOS)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Squat Coach</div>
+                        <div class="scribble-desc">Real-time squat form coaching</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                            <span><span class="meta-label">Platform</span>Mobile</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://lilcoach.vercel.app/" target="_blank" rel="noopener noreferrer">lilcoach.vercel.app (website)</a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <p><strong>What I Built:</strong></p>
+                    <p>
+                        React + MediaPipe web app. Tracks 33 joints → computes angles → compares to a "normal range" built from 115 reps across 16 videos →
+                        plays voice coaching (42 pro-recorded clips). 12 fault types, rep
+                        counting, per-user calibration. Deployed; later extended to plank.
+                    </p>
+                    <p><strong>Why I Stopped:</strong></p>
+                    <p>
+                        1. Angle-only detection passed 95% of fake/cheated reps as valid;
+                        one camera can't catch all faults (knee-cave needs front, depth needs side)<br>
+                        2. Camera setup — plank needs a 1.5–2m side placement, impractical in a real gym<br>
+                        3. When AI drives code cost toward zero, the human checking output
+                        against reality becomes the bottleneck — and that checker was me
+                    </p>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">IPO Check-up</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                            <span><span class="meta-label">Platform</span>PC</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://preipocheckup.netlify.app/" target="_blank" rel="noopener noreferrer">preipocheckup.netlify.app (website)</a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <p><strong>Why I Stopped:</strong></p>
+                    <p>Demand validation showed the market need was too narrow to justify further development.</p>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Menstrual Disc</div>
+                        <div class="scribble-desc">Started a community where Korean users can discuss menstrual discs, with the long-term goal of launching a brand and product.</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://www.tiktok.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="TikTok @periodlog">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.6 5.82A4.28 4.28 0 0 1 15.54 3h-3.09v12.4a2.59 2.59 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
+                                TikTok
+                            </a>
+                            <a class="link-chip" href="https://www.youtube.com/@periodlog" target="_blank" rel="noopener noreferrer" aria-label="YouTube @periodlog">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+                                YouTube
+                            </a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <p><strong>Why I Stopped:</strong></p>
+                    <p>
+                        Validation showed the TAM was too small to pursue, and shifting Korean users' perception of the product would likely take 5+ years.
+                    </p>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Parcel Tracking System</div>
+                        <div class="scribble-desc">A unified package tracking solution across multiple Korean e-commerce platforms and courier services.</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://mjtheorganic.github.io/Pinder/" target="_blank" rel="noopener noreferrer">Pinder (website)</a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <p><strong>Market Analysis Findings:</strong></p>
+                    <p>
+                        1. Low TAM - Heavy users (20+ parcels/month) represent &lt;5% of market<br>
+                        2. Adequate existing solutions via shopping apps + KakaoTalk alerts<br>
+                        3. Tracking API limitations require per-platform integration (high friction)<br>
+                        4. Existing solution (Smart Parcel) serves the niche heavy-user segment
+                    </p>
+                    <p><strong>Technical Insights:</strong></p>
+                    <p>
+                        - Explored Gmail/SMS parsing for auto-registration<br>
+                        - Evaluated shopping mall API integration feasibility<br>
+                        - Privacy constraints limit phone-based tracking lookup
+                    </p>
+                    <p><strong>Outcome:</strong></p>
+                    <p>
+                        Validated market-first approach before full development.<br>
+                        Decision to pause demonstrates resource allocation judgment.
+                    </p>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Personal Website</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot live"></span>Live</span>
+                        </div>
+                        <div class="link-row">
+                            <a class="link-chip" href="https://mjtheorganic.github.io/portfolio/" target="_blank" rel="noopener noreferrer">mjtheorganic.github.io (website)</a>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <a href="personal_website.zip" class="download-btn" download>Download</a>
+                </div>
+            </div>
+
+            <div class="scribble-item">
+                <div class="scribble-header">
+                    <div class="scribble-info">
+                        <div class="scribble-title">Weekly Newsletter</div>
+                        <div class="scribble-desc">Telegram bot (@MJnewsletter_bot)</div>
+                        <div class="meta-row">
+                            <span><span class="meta-label">Status</span><span class="status-dot"></span>Stopped</span>
+                        </div>
+                    </div>
+                    <div class="toggle-icon">▼</div>
+                </div>
+                <div class="scribble-content">
+                    <a href="newsletter_appscript.txt" class="download-btn" download>Download</a>
+                </div>
+            </div>
+
         </div>
     </div>
-
     <script>
-        document.getElementById('contactLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('contactEmail');
-            email.classList.toggle('show');
+        document.querySelectorAll('.scribble-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('a')) return;
+                e.stopPropagation();
+                const item = header.closest('.scribble-item');
+                item.classList.toggle('expanded');
+            });
         });
     </script>
 </body>
